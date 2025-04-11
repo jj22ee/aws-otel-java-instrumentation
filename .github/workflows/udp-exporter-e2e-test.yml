@@ -22,11 +22,11 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Configure AWS credentials for Testing Tracing
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.XRAY_UDP_EXPORTER_TEST_ROLE }}
-          aws-region: 'us-east-1'
+      # - name: Configure AWS credentials for Testing Tracing
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: ${{ secrets.XRAY_UDP_EXPORTER_TEST_ROLE }}
+      #     aws-region: 'us-east-1'
 
       - name: Download and run X-Ray Daemon
         run: |
