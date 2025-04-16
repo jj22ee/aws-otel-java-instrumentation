@@ -19,6 +19,6 @@ dependencies {
 }
 
 tasks.bootJar {
-  archiveFileName.set("integ-test-app.jar")
+  archiveFileName.set("udp-exporter-test-app.jar")
   mainClass.set("com.amazon.sampleapp.ValidationApp")
 }
