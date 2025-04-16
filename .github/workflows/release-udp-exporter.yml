@@ -21,6 +21,7 @@ jobs:
 
   release-udp-exporter:
     runs-on: ubuntu-latest
+    needs: validate-udp-exporter-e2e-test
     steps:
       - name: Checkout Repo @ SHA - ${{ github.sha }}
         uses: actions/checkout@v4
@@ -36,4 +37,11 @@ jobs:
         run: |
           ./gradlew build -p exporters/aws-opentelemetry-xray-udp-span-exporter
 
-      # TODO: Steps to publish to Maven Central
+      - name: Build and publish to sonatype
+        run: ./gradlew -p exporters/aws-opentelemetry-xray-udp-span-exporter publishToSonatype closeAndReleaseSonatypeStagingRepository --stacktrace
+        env:
+          PUBLISH_TOKEN_USERNAME: ${{ secrets.PUBLISH_TOKEN_USERNAME }}
+          PUBLISH_TOKEN_PASSWORD: ${{ secrets.PUBLISH_TOKEN_PASSWORD }}
+          GRGIT_USER: ${{ secrets.GITHUB_TOKEN }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
