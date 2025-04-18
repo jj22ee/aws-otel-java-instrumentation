@@ -38,10 +38,9 @@ jobs:
 
       - name: Publish UDP exporter to Maven Local
         id: build-udp-exporter
-        working-directory: exporters/aws-opentelemetry-xray-udp-span-exporter
         run: |
-          gradle build
-          gradle publishToMavenLocal
+          ./gradlew build -p exporters/aws-opentelemetry-xray-udp-span-exporter
+          ./gradlew publishToMavenLocal -p exporters/aws-opentelemetry-xray-udp-span-exporter
           echo "xrayUdpSpanExporterVersion=$(gradle -q printVersion)" >> $GITHUB_OUTPUT
 
       - name: Setup and Run Sample App in Background
