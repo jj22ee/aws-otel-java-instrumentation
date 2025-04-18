@@ -13,299 +13,302 @@
  * permissions and limitations under the License.
  */
 
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import com.github.jk1.license.render.InventoryMarkdownReportRenderer
-import nebula.plugin.release.git.opinion.Strategies
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
-plugins {
-  java
-  kotlin("jvm") version "2.1.0-RC2"
-  id("com.diffplug.spotless")
-  id("com.github.jk1.dependency-license-report")
-  id("io.github.gradle-nexus.publish-plugin")
-  id("nebula.release")
+break this build
 
-  id("com.gradleup.shadow") apply false
-}
+// import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+// import com.github.jk1.license.render.InventoryMarkdownReportRenderer
+// import nebula.plugin.release.git.opinion.Strategies
+// import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
-release {
-  defaultVersionStrategy = Strategies.getSNAPSHOT()
-}
+// plugins {
+//   java
+//   kotlin("jvm") version "2.1.0-RC2"
+//   id("com.diffplug.spotless")
+//   id("com.github.jk1.dependency-license-report")
+//   id("io.github.gradle-nexus.publish-plugin")
+//   id("nebula.release")
 
-nebulaRelease {
-  addReleaseBranchPattern("""v\d+\.\d+\.x""")
-}
+//   id("com.gradleup.shadow") apply false
+// }
 
-nexusPublishing {
-  repositories {
-    sonatype {
-      nexusUrl.set(uri("https://aws.oss.sonatype.org/service/local/"))
-      snapshotRepositoryUrl.set(uri("https://aws.oss.sonatype.org/content/repositories/snapshots/"))
-      username.set(System.getenv("PUBLISH_TOKEN_USERNAME"))
-      password.set(System.getenv("PUBLISH_TOKEN_PASSWORD"))
-    }
-  }
-}
+// release {
+//   defaultVersionStrategy = Strategies.getSNAPSHOT()
+// }
 
-val releaseTask = tasks.named("release")
-val postReleaseTask = tasks.named("release")
+// nebulaRelease {
+//   addReleaseBranchPattern("""v\d+\.\d+\.x""")
+// }
 
-allprojects {
+// nexusPublishing {
+//   repositories {
+//     sonatype {
+//       nexusUrl.set(uri("https://aws.oss.sonatype.org/service/local/"))
+//       snapshotRepositoryUrl.set(uri("https://aws.oss.sonatype.org/content/repositories/snapshots/"))
+//       username.set(System.getenv("PUBLISH_TOKEN_USERNAME"))
+//       password.set(System.getenv("PUBLISH_TOKEN_PASSWORD"))
+//     }
+//   }
+// }
 
-  project.group = "software.amazon.opentelemetry"
+// val releaseTask = tasks.named("release")
+// val postReleaseTask = tasks.named("release")
 
-  plugins.apply("com.diffplug.spotless")
+// allprojects {
 
-  plugins.withType(BasePlugin::class) {
-    val assemble = tasks.named("assemble")
-    val check = tasks.named("check")
+//   project.group = "software.amazon.opentelemetry"
 
-    releaseTask.configure {
-      dependsOn(assemble, check)
-    }
-  }
+//   plugins.apply("com.diffplug.spotless")
 
-  spotless {
-    kotlinGradle {
-      ktlint("1.4.0").editorConfigOverride(mapOf("indent_size" to "2", "continuation_indent_size" to "2"))
+//   plugins.withType(BasePlugin::class) {
+//     val assemble = tasks.named("assemble")
+//     val check = tasks.named("check")
 
-      // Doesn't support pluginManagement block
-      targetExclude("settings.gradle.kts")
+//     releaseTask.configure {
+//       dependsOn(assemble, check)
+//     }
+//   }
 
-      if (!project.path.startsWith(":sample-apps:")) {
-        licenseHeaderFile("${rootProject.projectDir}/config/license/header.java", "plugins|include|import")
-      }
-    }
-  }
+//   spotless {
+//     kotlinGradle {
+//       ktlint("1.4.0").editorConfigOverride(mapOf("indent_size" to "2", "continuation_indent_size" to "2"))
 
-  plugins.withId("java") {
-    java {
-      sourceCompatibility = JavaVersion.VERSION_1_8
-      targetCompatibility = JavaVersion.VERSION_1_8
+//       // Doesn't support pluginManagement block
+//       targetExclude("settings.gradle.kts")
 
-      withJavadocJar()
-      withSourcesJar()
-    }
+//       if (!project.path.startsWith(":sample-apps:")) {
+//         licenseHeaderFile("${rootProject.projectDir}/config/license/header.java", "plugins|include|import")
+//       }
+//     }
+//   }
 
-    val dependencyManagement by configurations.creating {
-      isCanBeConsumed = false
-      isCanBeResolved = false
-      isVisible = false
-    }
+//   plugins.withId("java") {
+//     java {
+//       sourceCompatibility = JavaVersion.VERSION_1_8
+//       targetCompatibility = JavaVersion.VERSION_1_8
 
-    dependencies {
-      dependencyManagement(platform(project(":dependencyManagement")))
-      afterEvaluate {
-        configurations.configureEach {
-          if (isCanBeResolved && !isCanBeConsumed) {
-            extendsFrom(dependencyManagement)
-          }
-        }
-      }
+//       withJavadocJar()
+//       withSourcesJar()
+//     }
 
-      testImplementation("org.assertj:assertj-core")
-      testImplementation("org.junit.jupiter:junit-jupiter-api")
-      testImplementation("org.junit.jupiter:junit-jupiter-params")
-      testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-    }
+//     val dependencyManagement by configurations.creating {
+//       isCanBeConsumed = false
+//       isCanBeResolved = false
+//       isVisible = false
+//     }
 
-    spotless {
-      java {
-        googleJavaFormat()
+//     dependencies {
+//       dependencyManagement(platform(project(":dependencyManagement")))
+//       afterEvaluate {
+//         configurations.configureEach {
+//           if (isCanBeResolved && !isCanBeConsumed) {
+//             extendsFrom(dependencyManagement)
+//           }
+//         }
+//       }
 
-        if (!project.path.startsWith(":sample-apps:")) {
-          licenseHeaderFile("${rootProject.projectDir}/config/license/header.java")
-        }
-      }
-    }
+//       testImplementation("org.assertj:assertj-core")
+//       testImplementation("org.junit.jupiter:junit-jupiter-api")
+//       testImplementation("org.junit.jupiter:junit-jupiter-params")
+//       testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+//     }
 
-    val enableCoverage: String? by project
-    if (enableCoverage == "true") {
-      plugins.apply("jacoco")
+//     spotless {
+//       java {
+//         googleJavaFormat()
 
-      tasks {
-        val build by named("build")
-        withType<JacocoReport> {
-          build.dependsOn(this)
+//         if (!project.path.startsWith(":sample-apps:")) {
+//           licenseHeaderFile("${rootProject.projectDir}/config/license/header.java")
+//         }
+//       }
+//     }
 
-          reports {
-            xml.required.set(true)
-            html.required.set(true)
-            csv.required.set(false)
-          }
-        }
-      }
-    }
+//     val enableCoverage: String? by project
+//     if (enableCoverage == "true") {
+//       plugins.apply("jacoco")
 
-    tasks {
-      withType<Test> {
-        useJUnitPlatform()
+//       tasks {
+//         val build by named("build")
+//         withType<JacocoReport> {
+//           build.dependsOn(this)
 
-        testLogging {
-          exceptionFormat = TestExceptionFormat.FULL
-          showStackTraces = true
-        }
-      }
+//           reports {
+//             xml.required.set(true)
+//             html.required.set(true)
+//             csv.required.set(false)
+//           }
+//         }
+//       }
+//     }
 
-      named<JavaCompile>("compileTestJava") {
-        sourceCompatibility = JavaVersion.VERSION_11.toString()
-        targetCompatibility = JavaVersion.VERSION_11.toString()
-      }
-    }
-  }
+//     tasks {
+//       withType<Test> {
+//         useJUnitPlatform()
 
-  plugins.withId("com.gradleup.shadow") {
-    tasks {
-      withType<ShadowJar>().configureEach {
-        exclude("**/module-info.class")
+//         testLogging {
+//           exceptionFormat = TestExceptionFormat.FULL
+//           showStackTraces = true
+//         }
+//       }
 
-        mergeServiceFiles()
+//       named<JavaCompile>("compileTestJava") {
+//         sourceCompatibility = JavaVersion.VERSION_11.toString()
+//         targetCompatibility = JavaVersion.VERSION_11.toString()
+//       }
+//     }
+//   }
 
-        // rewrite library instrumentation dependencies
-        relocate("io.opentelemetry.instrumentation", "io.opentelemetry.javaagent.shaded.instrumentation") {
-          // As per https://github.com/open-telemetry/opentelemetry-java/issues/4919#issuecomment-1305774636
-          exclude("io.opentelemetry.instrumentation.resources.*")
-          exclude("io.opentelemetry.instrumentation.spring.resources.*")
-        }
+//   plugins.withId("com.gradleup.shadow") {
+//     tasks {
+//       withType<ShadowJar>().configureEach {
+//         exclude("**/module-info.class")
 
-        // rewrite dependencies calling Logger.getLogger
-        relocate("java.util.logging.Logger", "io.opentelemetry.javaagent.bootstrap.PatchLogger")
+//         mergeServiceFiles()
 
-        // relocate OpenTelemetry API usage
-        relocate("io.opentelemetry.api", "io.opentelemetry.javaagent.shaded.io.opentelemetry.api")
-        relocate("io.opentelemetry.semconv", "io.opentelemetry.javaagent.shaded.io.opentelemetry.semconv")
-        relocate("io.opentelemetry.spi", "io.opentelemetry.javaagent.shaded.io.opentelemetry.spi")
-        relocate("io.opentelemetry.context", "io.opentelemetry.javaagent.shaded.io.opentelemetry.context")
+//         // rewrite library instrumentation dependencies
+//         relocate("io.opentelemetry.instrumentation", "io.opentelemetry.javaagent.shaded.instrumentation") {
+//           // As per https://github.com/open-telemetry/opentelemetry-java/issues/4919#issuecomment-1305774636
+//           exclude("io.opentelemetry.instrumentation.resources.*")
+//           exclude("io.opentelemetry.instrumentation.spring.resources.*")
+//         }
 
-        // relocate the OpenTelemetry extensions that are used by instrumentation modules)
-        // these extensions live in the AgentClassLoader, and are injected into the user's class loader
-        // by the instrumentation modules that use them
-        relocate("io.opentelemetry.extension.aws", "io.opentelemetry.javaagent.shaded.io.opentelemetry.extension.aws")
-        relocate(
-          "io.opentelemetry.extension.kotlin",
-          "io.opentelemetry.javaagent.shaded.io.opentelemetry.extension.kotlin",
-        )
-      }
-    }
-  }
+//         // rewrite dependencies calling Logger.getLogger
+//         relocate("java.util.logging.Logger", "io.opentelemetry.javaagent.bootstrap.PatchLogger")
 
-  plugins.withId("maven-publish") {
-    plugins.apply("signing")
+//         // relocate OpenTelemetry API usage
+//         relocate("io.opentelemetry.api", "io.opentelemetry.javaagent.shaded.io.opentelemetry.api")
+//         relocate("io.opentelemetry.semconv", "io.opentelemetry.javaagent.shaded.io.opentelemetry.semconv")
+//         relocate("io.opentelemetry.spi", "io.opentelemetry.javaagent.shaded.io.opentelemetry.spi")
+//         relocate("io.opentelemetry.context", "io.opentelemetry.javaagent.shaded.io.opentelemetry.context")
 
-    afterEvaluate {
-      val publishTask = tasks.named("publishToSonatype")
+//         // relocate the OpenTelemetry extensions that are used by instrumentation modules)
+//         // these extensions live in the AgentClassLoader, and are injected into the user's class loader
+//         // by the instrumentation modules that use them
+//         relocate("io.opentelemetry.extension.aws", "io.opentelemetry.javaagent.shaded.io.opentelemetry.extension.aws")
+//         relocate(
+//           "io.opentelemetry.extension.kotlin",
+//           "io.opentelemetry.javaagent.shaded.io.opentelemetry.extension.kotlin",
+//         )
+//       }
+//     }
+//   }
 
-      postReleaseTask.configure {
-        dependsOn(publishTask)
-      }
-    }
+//   plugins.withId("maven-publish") {
+//     plugins.apply("signing")
 
-    configure<PublishingExtension> {
-      publications {
-        register<MavenPublication>("maven") {
-          afterEvaluate {
-            artifactId = project.findProperty("archivesBaseName") as String
-          }
+//     afterEvaluate {
+//       val publishTask = tasks.named("publishToSonatype")
 
-          plugins.withId("java-platform") {
-            from(components["javaPlatform"])
-          }
-          plugins.withId("java") {
-            from(components["java"])
-          }
+//       postReleaseTask.configure {
+//         dependsOn(publishTask)
+//       }
+//     }
 
-          versionMapping {
-            allVariants {
-              fromResolutionResult()
-            }
-          }
+//     configure<PublishingExtension> {
+//       publications {
+//         register<MavenPublication>("maven") {
+//           afterEvaluate {
+//             artifactId = project.findProperty("archivesBaseName") as String
+//           }
 
-          pom {
-            name.set("AWS Distro for OpenTelemetry Java Agent")
-            description.set(
-              "The Amazon Web Services distribution of the OpenTelemetry Java Instrumentation.",
-            )
-            url.set("https:/github.com/aws-observability/aws-otel-java-instrumentation")
+//           plugins.withId("java-platform") {
+//             from(components["javaPlatform"])
+//           }
+//           plugins.withId("java") {
+//             from(components["java"])
+//           }
 
-            licenses {
-              license {
-                name.set("Apache License, Version 2.0")
-                url.set("https://aws.amazon.com/apache2.0")
-                distribution.set("repo")
-              }
-            }
+//           versionMapping {
+//             allVariants {
+//               fromResolutionResult()
+//             }
+//           }
 
-            developers {
-              developer {
-                id.set("amazonwebservices")
-                organization.set("Amazon Web Services")
-                organizationUrl.set("https://aws.amazon.com")
-                roles.add("developer")
-              }
-            }
+//           pom {
+//             name.set("AWS Distro for OpenTelemetry Java Agent")
+//             description.set(
+//               "The Amazon Web Services distribution of the OpenTelemetry Java Instrumentation.",
+//             )
+//             url.set("https:/github.com/aws-observability/aws-otel-java-instrumentation")
 
-            scm {
-              connection.set("scm:git:git@github.com:aws-observability/aws-otel-java-instrumentation.git")
-              developerConnection.set("scm:git:git@github.com:aws-observability/aws-otel-java-instrumentation.git")
-              url.set("https://github.com/aws-observability/aws-otel-java-instrumentation.git")
-            }
-          }
-        }
-      }
-    }
+//             licenses {
+//               license {
+//                 name.set("Apache License, Version 2.0")
+//                 url.set("https://aws.amazon.com/apache2.0")
+//                 distribution.set("repo")
+//               }
+//             }
 
-    tasks.withType<Sign>().configureEach {
-      onlyIf { System.getenv("CI") == "true" }
-    }
+//             developers {
+//               developer {
+//                 id.set("amazonwebservices")
+//                 organization.set("Amazon Web Services")
+//                 organizationUrl.set("https://aws.amazon.com")
+//                 roles.add("developer")
+//               }
+//             }
 
-    configure<SigningExtension> {
-      val signingKey = System.getenv("GPG_PRIVATE_KEY")
-      val signingPassword = System.getenv("GPG_PASSPHRASE")
-      useInMemoryPgpKeys(signingKey, signingPassword)
-      sign(the<PublishingExtension>().publications["maven"])
-    }
-  }
-}
+//             scm {
+//               connection.set("scm:git:git@github.com:aws-observability/aws-otel-java-instrumentation.git")
+//               developerConnection.set("scm:git:git@github.com:aws-observability/aws-otel-java-instrumentation.git")
+//               url.set("https://github.com/aws-observability/aws-otel-java-instrumentation.git")
+//             }
+//           }
+//         }
+//       }
+//     }
 
-tasks {
-  val cleanLicenseReport by registering(Delete::class) {
-    delete("licenses")
-  }
+//     tasks.withType<Sign>().configureEach {
+//       onlyIf { System.getenv("CI") == "true" }
+//     }
 
-  named("generateLicenseReport") {
-    dependsOn(cleanLicenseReport)
-  }
-}
+//     configure<SigningExtension> {
+//       val signingKey = System.getenv("GPG_PRIVATE_KEY")
+//       val signingPassword = System.getenv("GPG_PASSPHRASE")
+//       useInMemoryPgpKeys(signingKey, signingPassword)
+//       sign(the<PublishingExtension>().publications["maven"])
+//     }
+//   }
+// }
 
-task("printVersion") {
-  doLast {
-    println(project.version)
-  }
-}
+// tasks {
+//   val cleanLicenseReport by registering(Delete::class) {
+//     delete("licenses")
+//   }
 
-licenseReport {
-  renderers = arrayOf(InventoryMarkdownReportRenderer())
-}
+//   named("generateLicenseReport") {
+//     dependsOn(cleanLicenseReport)
+//   }
+// }
 
-tasks {
-  val cleanLicenses by registering(Delete::class) {
-    delete("licenses")
-  }
+// task("printVersion") {
+//   doLast {
+//     println(project.version)
+//   }
+// }
 
-  val copyLicenses by registering(Copy::class) {
-    dependsOn(cleanLicenses)
+// licenseReport {
+//   renderers = arrayOf(InventoryMarkdownReportRenderer())
+// }
 
-    from("build/reports/dependency-license")
-    into("licenses")
-  }
+// tasks {
+//   val cleanLicenses by registering(Delete::class) {
+//     delete("licenses")
+//   }
 
-  val generateLicenseReport by existing {
-    finalizedBy(copyLicenses)
-  }
-}
+//   val copyLicenses by registering(Copy::class) {
+//     dependsOn(cleanLicenses)
 
-nebulaRelease {
-  // It is only possible to release from a release branch.
-  releaseBranchPatterns = setOf("""release\/v\d+\.\d+\.x""")
-}
+//     from("build/reports/dependency-license")
+//     into("licenses")
+//   }
+
+//   val generateLicenseReport by existing {
+//     finalizedBy(copyLicenses)
+//   }
+// }
+
+// nebulaRelease {
+//   // It is only possible to release from a release branch.
+//   releaseBranchPatterns = setOf("""release\/v\d+\.\d+\.x""")
+// }

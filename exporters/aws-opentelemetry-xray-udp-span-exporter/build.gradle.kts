@@ -19,6 +19,7 @@ plugins {
   id("maven-publish")
   id("signing")
   id("io.github.gradle-nexus.publish-plugin")
+  id("nebula.release")
 }
 
 group = "software.amazon.distro.opentelemetry"
