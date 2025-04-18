@@ -23,7 +23,7 @@ plugins {
 }
 
 group = "software.amazon.distro.opentelemetry"
-version = "0.0.1-SNAPSHOT"
+version = "0.0.1"
 
 // base {
 //   archivesBaseName = "aws-opentelemetry-propagator"
@@ -121,26 +121,8 @@ nexusPublishing {
   }
 }
 
-// plugins.apply("signing")
-
-// afterEvaluate {
-//   val publishTask = tasks.named("publishToSonatype")
-
-//   postReleaseTask.configure {
-//     dependsOn(publishTask)
-//   }
-// }
-
 plugins.withId("maven-publish") {
   plugins.apply("signing")
-
-  // afterEvaluate {
-  //   val publishTask = tasks.named("publishToSonatype")
-
-  //   postReleaseTask.configure {
-  //     dependsOn(publishTask)
-  //   }
-  // }
 
   configure<PublishingExtension> {
     publications {
@@ -189,10 +171,3 @@ plugins.withId("maven-publish") {
     sign(the<PublishingExtension>().publications["maven"])
   }
 }
-
-// signing {
-//   val signingKey = System.getenv("GPG_PRIVATE_KEY")
-//   val signingPassword = System.getenv("GPG_PASSPHRASE")
-//   useInMemoryPgpKeys(signingKey, signingPassword)
-//   sign(the<PublishingExtension>().publications["mavenJava"])
-// }
