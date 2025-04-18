@@ -120,45 +120,78 @@ nexusPublishing {
   }
 }
 
-publishing {
-  publications {
-    create<MavenPublication>("mavenJava") {
-      from(components["java"])
+// plugins.apply("signing")
 
-      pom {
-        name.set("AWS Distro for OpenTelemetry X-Ray UDP Exporter")
-        description.set(
-          "AWS X-Ray UDP Exporter for OpenTelemetry Java"
-        )
-        url.set("https:/github.com/aws-observability/aws-otel-java-instrumentation")
-        licenses {
-          license {
-            name.set("Apache License, Version 2.0")
-            url.set("https://aws.amazon.com/apache2.0")
-            distribution.set("repo")
+// afterEvaluate {
+//   val publishTask = tasks.named("publishToSonatype")
+
+//   postReleaseTask.configure {
+//     dependsOn(publishTask)
+//   }
+// }
+
+plugins.withId("maven-publish") {
+  plugins.apply("signing")
+
+  // afterEvaluate {
+  //   val publishTask = tasks.named("publishToSonatype")
+
+  //   postReleaseTask.configure {
+  //     dependsOn(publishTask)
+  //   }
+  // }
+
+  configure<PublishingExtension> {
+    publications {
+      register<MavenPublication>("maven") {
+        from(components["java"])
+
+        pom {
+          name.set("AWS Distro for OpenTelemetry X-Ray UDP Exporter")
+          description.set(
+            "AWS X-Ray UDP Exporter for OpenTelemetry Java"
+          )
+          url.set("https:/github.com/aws-observability/aws-otel-java-instrumentation")
+          licenses {
+            license {
+              name.set("Apache License, Version 2.0")
+              url.set("https://aws.amazon.com/apache2.0")
+              distribution.set("repo")
+            }
           }
-        }
-        developers {
-          developer {
-            id.set("amazonwebservices")
-            organization.set("Amazon Web Services")
-            organizationUrl.set("https://aws.amazon.com")
-            roles.add("developer")
+          developers {
+            developer {
+              id.set("amazonwebservices")
+              organization.set("Amazon Web Services")
+              organizationUrl.set("https://aws.amazon.com")
+              roles.add("developer")
+            }
           }
-        }
-        scm {
-          connection.set("scm:git:git@github.com:aws-observability/aws-otel-java-instrumentation.git")
-          developerConnection.set("scm:git:git@github.com:aws-observability/aws-otel-java-instrumentation.git")
-          url.set("https://github.com/aws-observability/aws-otel-java-instrumentation.git")
+          scm {
+            connection.set("scm:git:git@github.com:aws-observability/aws-otel-java-instrumentation.git")
+            developerConnection.set("scm:git:git@github.com:aws-observability/aws-otel-java-instrumentation.git")
+            url.set("https://github.com/aws-observability/aws-otel-java-instrumentation.git")
+          }
         }
       }
     }
   }
+
+  tasks.withType<Sign>().configureEach {
+    onlyIf { System.getenv("CI") == "true" }
+  }
+
+  configure<SigningExtension> {
+    val signingKey = System.getenv("GPG_PRIVATE_KEY")
+    val signingPassword = System.getenv("GPG_PASSPHRASE")
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign(the<PublishingExtension>().publications["maven"])
+  }
 }
 
-signing {
-  val signingKey = System.getenv("GPG_PRIVATE_KEY")
-  val signingPassword = System.getenv("GPG_PASSPHRASE")
-  useInMemoryPgpKeys(signingKey, signingPassword)
-  sign(the<PublishingExtension>().publications["mavenJava"])
-}
+// signing {
+//   val signingKey = System.getenv("GPG_PRIVATE_KEY")
+//   val signingPassword = System.getenv("GPG_PASSPHRASE")
+//   useInMemoryPgpKeys(signingKey, signingPassword)
+//   sign(the<PublishingExtension>().publications["mavenJava"])
+// }
