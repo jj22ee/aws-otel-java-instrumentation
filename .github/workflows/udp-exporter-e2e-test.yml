@@ -2,8 +2,8 @@ name: Test ADOT X-Ray UDP Exporter
 on:
   workflow_call:
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
 
 permissions:
   id-token: write
@@ -22,19 +22,19 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Configure AWS credentials for Testing Tracing
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.XRAY_UDP_EXPORTER_TEST_ROLE }}
-          aws-region: 'us-east-1'
+      # - name: Configure AWS credentials for Testing Tracing
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: ${{ secrets.XRAY_UDP_EXPORTER_TEST_ROLE }}
+      #     aws-region: 'us-east-1'
 
-      - name: Download and run X-Ray Daemon
-        run: |
-          mkdir xray-daemon
-          cd xray-daemon
-          wget https://s3.us-east-2.amazonaws.com/aws-xray-assets.us-east-2/xray-daemon/aws-xray-daemon-linux-3.x.zip
-          unzip aws-xray-daemon-linux-3.x.zip
-          ./xray -o -n us-east-2 -f ./daemon-logs.log --log-level debug &
+      # - name: Download and run X-Ray Daemon
+      #   run: |
+      #     mkdir xray-daemon
+      #     cd xray-daemon
+      #     wget https://s3.us-east-2.amazonaws.com/aws-xray-assets.us-east-2/xray-daemon/aws-xray-daemon-linux-3.x.zip
+      #     unzip aws-xray-daemon-linux-3.x.zip
+      #     ./xray -o -n us-east-2 -f ./daemon-logs.log --log-level debug &
 
       - name: Publish UDP exporter to Maven Local
         id: build-udp-exporter
@@ -51,8 +51,8 @@ jobs:
         run: |
           export XRAY_UDP_SPAN_EXPORTER_VERSION=${{ steps.build-udp-exporter.outputs.xrayUdpSpanExporterVersion }}
           echo "Running Sample App against X-Ray UDP Span Exporter version: $XRAY_UDP_SPAN_EXPORTER_VERSION"
-          gradle build
-          gradle bootRun &
+          ../../gradlew build
+          ../../gradlew bootRun &
           sleep 5
 
       - name: Call Sample App Endpoint

@@ -149,7 +149,11 @@ plugins.withId("maven-publish") {
   }
 
   tasks.withType<Sign>().configureEach {
-    onlyIf { System.getenv("CI") == "true" }
+    onlyIf {
+      System.getenv("CI") == "true" &&
+      !System.getenv("GPG_PRIVATE_KEY").isNullOrEmpty() &&
+      !System.getenv("GPG_PASSPHRASE").isNullOrEmpty()
+    }
   }
 
   configure<SigningExtension> {
