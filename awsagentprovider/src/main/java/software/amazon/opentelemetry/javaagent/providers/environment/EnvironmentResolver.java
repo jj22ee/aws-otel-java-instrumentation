@@ -30,8 +30,10 @@ import java.util.function.Supplier;
  *   <li>Explicit {@code deployment.environment[.name]} &rarr; use as-is
  *   <li>EKS / K8s &rarr; {@code "eks:<cluster>/<namespace>"} or {@code "k8s:<cluster>/<namespace>"}
  *   <li>ECS &rarr; {@code "ecs:<cluster>"} (cluster name from {@code aws.ecs.cluster.arn})
- *   <li>EC2 &rarr; {@code "ec2:<asg>"} when an Auto Scaling group is known, else {@code
- *       "ec2:default"}
+ *   <li>EC2 (host is actually EC2) &rarr; {@code "ec2:<asg>"} when an Auto Scaling group is known,
+ *       else {@code "ec2:default"}
+ *   <li>Otherwise (non-AWS / undetected host) &rarr; {@code ""} (key omitted), matching the agent
+ *       which leaves Environment empty there
  * </ol>
  *
  * <p>Scope is the LOCAL environment only ({@code aws.local.environment}); remote-environment
@@ -61,6 +63,7 @@ public final class EnvironmentResolver {
   private static final AttributeKey<String> HOST_ID = AttributeKey.stringKey("host.id");
 
   private static final String AWS_EKS = "aws_eks";
+  private static final String AWS_EC2 = "aws_ec2";
   private static final String UNKNOWN_NAMESPACE = "UnknownNamespace";
 
   // Memoizes the (at most one) IMDS Auto Scaling group lookup across the whole agent, so the EC2
@@ -96,14 +99,19 @@ public final class EnvironmentResolver {
   /**
    * Resolves {@code aws.local.environment} from the given resource attributes.
    *
+   * <p>The EC2 branch is gated on the host actually being EC2, mirroring the CloudWatch agent
+   * (whose environment branches only run for EC2 / Kubernetes). On a non-AWS / non-K8s host the
+   * agent leaves the Environment empty, so this returns {@code ""} rather than falsely claiming
+   * {@code ec2:default}.
+   *
    * @param resource the OTel resource (its attributes drive resolution)
    * @param asgSupplier supplies the EC2 Auto Scaling group name; invoked only on the EC2 branch.
    *     May be {@code null}, in which case the EC2 branch falls back to {@code ec2:default}.
-   * @return the resolved environment string; never null or empty.
+   * @return the resolved environment string, or {@code ""} on a non-AWS / undetected host.
    */
   public static String resolveLocalEnvironment(Resource resource, Supplier<String> asgSupplier) {
     if (resource == null) {
-      return "ec2:default";
+      return "";
     }
 
     // 1. Explicit deployment.environment[.name] wins outright.
@@ -134,16 +142,23 @@ public final class EnvironmentResolver {
       }
     }
 
-    // 4. EC2: use the Auto Scaling group if available (fetched lazily, EC2-branch only).
+    // 4. EC2: only when the host is actually EC2 (matches the agent's Platform == ModeEC2 gate).
+    //    Signals: cloud.platform=aws_ec2, host.id (EC2 instance id from the OTel EC2 detector),
+    //    or the ASG tag (an IMDS-only EC2 signal, fetched lazily on this branch only).
+    String asg = "";
     if (asgSupplier != null) {
-      String asg = trim(asgSupplier.get());
-      if (!asg.isEmpty()) {
-        return "ec2:" + asg;
-      }
+      asg = trim(asgSupplier.get());
+    }
+    boolean isEc2 =
+        AWS_EC2.equals(get(resource, CLOUD_PLATFORM))
+            || !get(resource, HOST_ID).isEmpty()
+            || !asg.isEmpty();
+    if (isEc2) {
+      return asg.isEmpty() ? "ec2:default" : "ec2:" + asg;
     }
 
-    // 5. Default fallback.
-    return "ec2:default";
+    // 5. Non-AWS / undetected host: the agent leaves Environment empty here, so do we.
+    return "";
   }
 
   /**
@@ -164,17 +179,23 @@ public final class EnvironmentResolver {
   /**
    * Returns a Resource with {@code aws.local.environment} stamped, computed via {@link
    * #resolveLocalEnvironment}. Idempotent: if the attribute is already present it is left
-   * untouched.
+   * untouched. When the resolver yields {@code ""} (non-AWS / undetected host), the key is omitted
+   * entirely — matching the CloudWatch agent, which leaves Environment empty there.
    */
   public static Resource withLocalEnvironment(Resource resource, Supplier<String> asgSupplier) {
     if (resource == null) {
-      return Resource.create(
-          Attributes.of(LOCAL_ENVIRONMENT_KEY, resolveLocalEnvironment(null, asgSupplier)));
+      String env = resolveLocalEnvironment(null, asgSupplier);
+      return env.isEmpty()
+          ? Resource.empty()
+          : Resource.create(Attributes.of(LOCAL_ENVIRONMENT_KEY, env));
     }
     if (!get(resource, LOCAL_ENVIRONMENT_KEY).isEmpty()) {
       return resource;
     }
     String env = resolveLocalEnvironment(resource, asgSupplier);
+    if (env.isEmpty()) {
+      return resource;
+    }
     return resource.merge(Resource.create(Attributes.of(LOCAL_ENVIRONMENT_KEY, env)));
   }
 
