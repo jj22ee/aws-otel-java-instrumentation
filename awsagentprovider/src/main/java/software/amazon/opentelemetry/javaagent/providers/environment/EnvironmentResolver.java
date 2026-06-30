@@ -32,8 +32,9 @@ import java.util.function.Supplier;
  *   <li>ECS &rarr; {@code "ecs:<cluster>"} (cluster name from {@code aws.ecs.cluster.arn})
  *   <li>EC2 (host is actually EC2) &rarr; {@code "ec2:<asg>"} when an Auto Scaling group is known,
  *       else {@code "ec2:default"}
- *   <li>Otherwise (non-AWS / undetected host) &rarr; {@code ""} (key omitted), matching the agent
- *       which leaves Environment empty there
+ *   <li>Otherwise (non-AWS / undetected host) &rarr; {@code "generic:default"}, matching the agent,
+ *       which runs its "generic" resolver (Mode == onPremise) and emits {@code "generic:default"}
+ *       there -- it never leaves Environment empty
  * </ol>
  *
  * <p>Scope is the LOCAL environment only ({@code aws.local.environment}); remote-environment
@@ -111,7 +112,8 @@ public final class EnvironmentResolver {
    */
   public static String resolveLocalEnvironment(Resource resource, Supplier<String> asgSupplier) {
     if (resource == null) {
-      return "";
+      // No resource at all -> no platform signal -> same non-AWS fallback as below.
+      return "generic:default";
     }
 
     // 1. Explicit deployment.environment[.name] wins outright.
@@ -157,8 +159,9 @@ public final class EnvironmentResolver {
       return asg.isEmpty() ? "ec2:default" : "ec2:" + asg;
     }
 
-    // 5. Non-AWS / undetected host: the agent leaves Environment empty here, so do we.
-    return "";
+    // 5. Non-AWS / undetected host: the CloudWatch agent runs its "generic" resolver here and
+    //    emits "generic:default" (never empty), so mirror that instead of returning empty.
+    return "generic:default";
   }
 
   /**
@@ -179,8 +182,9 @@ public final class EnvironmentResolver {
   /**
    * Returns a Resource with {@code aws.local.environment} stamped, computed via {@link
    * #resolveLocalEnvironment}. Idempotent: if the attribute is already present it is left
-   * untouched. When the resolver yields {@code ""} (non-AWS / undetected host), the key is omitted
-   * entirely — matching the CloudWatch agent, which leaves Environment empty there.
+   * untouched. The resolver always yields a non-empty value (a platform scope, an explicit env, or
+   * the {@code "generic:default"} fallback), matching the CloudWatch agent, which always sets
+   * Environment. The empty-string guards below are defensive only.
    */
   public static Resource withLocalEnvironment(Resource resource, Supplier<String> asgSupplier) {
     if (resource == null) {

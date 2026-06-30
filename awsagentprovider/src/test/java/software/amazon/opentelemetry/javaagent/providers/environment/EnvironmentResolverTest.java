@@ -124,15 +124,15 @@ class EnvironmentResolverTest {
   }
 
   @Test
-  void emptyResourceNonAwsReturnsEmpty() {
-    // No platform signal (non-AWS / undetected host): the agent leaves Environment empty,
-    // so the SDK returns "" rather than falsely claiming ec2:default.
-    assertThat(resolve(Resource.empty(), NO_ASG)).isEmpty();
+  void emptyResourceNonAwsReturnsGenericDefault() {
+    // No platform signal (non-AWS / undetected host): the agent runs its "generic" resolver and
+    // emits "generic:default", so the SDK matches that rather than claiming ec2:default.
+    assertThat(resolve(Resource.empty(), NO_ASG)).isEqualTo("generic:default");
   }
 
   @Test
-  void nullResourceReturnsEmpty() {
-    assertThat(resolve(null, NO_ASG)).isEmpty();
+  void nullResourceReturnsGenericDefault() {
+    assertThat(resolve(null, NO_ASG)).isEqualTo("generic:default");
   }
 
   @Test
@@ -143,8 +143,9 @@ class EnvironmentResolverTest {
   }
 
   @Test
-  void nonAwsHostWithServiceNameReturnsEmpty() {
-    assertThat(resolve(resourceOf("service.name", "svc", "host.name", "my-vm"), NO_ASG)).isEmpty();
+  void nonAwsHostWithServiceNameReturnsGenericDefault() {
+    assertThat(resolve(resourceOf("service.name", "svc", "host.name", "my-vm"), NO_ASG))
+        .isEqualTo("generic:default");
   }
 
   @Test
@@ -178,11 +179,12 @@ class EnvironmentResolverTest {
   }
 
   @Test
-  void ecsEmptyClusterArnFallsThroughToEmpty() {
-    // Empty cluster segment + cloud.platform=aws_ecs (not aws_ec2) and no EC2 signal → "".
+  void ecsEmptyClusterArnFallsThroughToGenericDefault() {
+    // Empty cluster segment + cloud.platform=aws_ecs (not aws_ec2) and no EC2 signal →
+    // "generic:default" (the agent's generic resolver), not ec2:default.
     Resource resource =
         resourceOf("cloud.platform", "aws_ecs", "aws.ecs.cluster.arn", "arn:.../cluster/");
-    assertThat(resolve(resource, NO_ASG)).isEmpty();
+    assertThat(resolve(resource, NO_ASG)).isEqualTo("generic:default");
   }
 
   @Test
@@ -213,12 +215,13 @@ class EnvironmentResolverTest {
   }
 
   @Test
-  void withLocalEnvironmentOmitsKeyOnNonAwsHost() {
-    // Non-AWS host → resolver returns "" → the key must be omitted (matches the agent
-    // leaving Environment empty), not stamped with ec2:default.
+  void withLocalEnvironmentStampsGenericDefaultOnNonAwsHost() {
+    // Non-AWS host → resolver returns "generic:default" (matches the agent's generic resolver),
+    // so the key is stamped with that rather than omitted or set to ec2:default.
     Resource resource = resourceOf("service.name", "svc", "host.name", "my-vm");
     Resource stamped = EnvironmentResolver.withLocalEnvironment(resource, NO_ASG);
-    assertThat(stamped.getAttribute(EnvironmentResolver.LOCAL_ENVIRONMENT_KEY)).isNull();
+    assertThat(stamped.getAttribute(EnvironmentResolver.LOCAL_ENVIRONMENT_KEY))
+        .isEqualTo("generic:default");
   }
 
   @Test
