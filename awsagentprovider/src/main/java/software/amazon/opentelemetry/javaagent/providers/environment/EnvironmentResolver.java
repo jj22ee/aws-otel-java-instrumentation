@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 
 /**
  * Resolves {@code aws.local.environment} from OTel Resource attributes, mirroring the CloudWatch
- * agent's awsentity resolver precedence so the SDK can compute the same environment value the agent
+ * agent's awsapplicationsignals resolver precedence so the SDK can compute the same environment value the agent
  * would, with no dependency on the agent process:
  *
  * <ol>
